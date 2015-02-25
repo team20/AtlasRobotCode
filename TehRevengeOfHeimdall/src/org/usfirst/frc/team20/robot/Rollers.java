@@ -2,8 +2,8 @@ package org.usfirst.frc.team20.robot;
 import edu.wpi.first.wpilibj.Talon;
 
 public class Rollers {
-	public Talon leftRollers;
-	public Talon rightRollers;
+	public static Talon leftRollers;
+	public static Talon rightRollers;
 	
 	public Rollers(int left, int right){
 		leftRollers = new Talon(left);

@@ -13,7 +13,7 @@ public class Forks {
 	}
 
 	public void set(double percentVoltage){
-		//forks.changeControlMode(ControlMode.PercentVbus);
+		forks.changeControlMode(ControlMode.PercentVbus);
 		forks.set(percentVoltage);
 	}
 	

@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 
 public class Tray {
-	public CANTalon trayMotor;
+	public static CANTalon trayMotor;
 	public Tray(int port){
 		trayMotor = new CANTalon(port);
 		trayMotor.changeControlMode(ControlMode.PercentVbus);

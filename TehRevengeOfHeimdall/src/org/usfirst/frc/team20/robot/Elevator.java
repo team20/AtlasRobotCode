@@ -5,10 +5,10 @@ import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 
 public class Elevator {
 
-	public CANTalon master;
-	public CANTalon slave1;
-	public CANTalon slave2;
-	public CANTalon slave3;
+	public static CANTalon master;
+	public static CANTalon slave1;
+	public static CANTalon slave2;
+	public static CANTalon slave3;
 
 	public Elevator(int m, int s1, int s2, int s3) {
 		master = new CANTalon(m);
@@ -37,7 +37,7 @@ public class Elevator {
 //		master.set(encoderPos);	
 	}
 	
-	public void checkElevator(){
+	public static void checkElevator(){
 		if (!Sensors.elevatorShort.get()) {
 			master.changeControlMode(ControlMode.Position);
 			master.setPosition(0);

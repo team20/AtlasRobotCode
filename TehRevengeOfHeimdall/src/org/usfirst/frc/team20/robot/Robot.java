@@ -22,11 +22,12 @@ public class Robot extends IterativeRobot {
 			ELEVATOR_SLAVE_ONE = 4, ELEVATOR_SLAVE_TWO = 3,
 			ELEVATOR_SLAVE_THREE = 8;
 
-	public static Joystick driver = new Joystick(0);
-	public static Joystick operator = new Joystick(1);
 	Tray tray = new Tray(TRAY_PORT);
+	
 	Rollers rollers = new Rollers(LEFT_ROLLER_PORT, RIGHT_ROLLER_PORT);
+	
 	Forks forks = new Forks(FORKS_PORT);
+	
 	Elevator elevator = new Elevator(ELEVATOR_MASTER_PORT, ELEVATOR_SLAVE_ONE,
 			ELEVATOR_SLAVE_TWO, ELEVATOR_SLAVE_THREE);
 

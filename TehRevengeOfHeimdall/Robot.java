@@ -23,7 +23,7 @@ public class Robot extends IterativeRobot {
 			ELEVATOR_SLAVE_THREE = 8;
 
 	
-	
+	public static Joystick operator = new Joystick(1);
 	DriveControls dr = new DriveControls(0);
 	
 	public static  Tray tray = new Tray(TRAY_PORT);

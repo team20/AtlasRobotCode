@@ -56,6 +56,7 @@ public class Motors {
 		elevatorMaster = new T20CANServoEnc(ELEVATOR_MASTER_PORT, 
 				new int[]{ELEVATOR_SLAVE_ONE, ELEVATOR_SLAVE_TWO, ELEVATOR_SLAVE_THREE},
 				ELEVATOR_P, ELEVATOR_I, ELEVATOR_D, 0, -9400, 0);
+		elevatorMaster.setCloseLoopRampRate(4400);
 		elevatorMaster.setXDScale(0, 60, "inches");
 		elevatorMaster.reverseSensor(true);
 		

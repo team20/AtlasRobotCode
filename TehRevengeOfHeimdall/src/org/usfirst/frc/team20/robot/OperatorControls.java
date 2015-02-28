@@ -1,6 +1,5 @@
 package org.usfirst.frc.team20.robot;
 
-import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -13,23 +12,19 @@ public class OperatorControls {
 	public static double ramp = 1500;
 	public static double talFil = 0;
 
+	private static Timer elevatorCooldown = new Timer();
+	private static final double ELEVATOR_COOLDOWN = .7;
+	
 	private static double elevatorPositionEU = 0;
-
-	private static double level0 = 1;
-	private static double level1 = 13.1;
-	private static double level2 = 20.6;
-	private static double level3 = 32.1;
-	private static double level4 = 44.8;
-	private static double level5 = 56.9;
-	private static double level6 = 60;
+	private static boolean trayBool = false;
+	private static double elevatorPos[] = { .5, 12.6, 24.7, 36.8, 48.9, 60 };
+	public static int level = 0;
 
 	// TODO Update Axis Values!
 	public static void opControls() {
-		int elevatorPos = 0;
-		double elevatorEnc = Motors.elevatorMaster.getEncPosition();
-		double analogElevator = Motors.operator.getRawAxis(1);
-		double analogFork = -Motors.operator.getRawAxis(2);
-		double clawState = Motors.operator.getPOV();
+		double elevatorActual = 0;
+		double analogElevator = Motors.operator.getRawAxis(3);
+		double analogFork = -Motors.operator.getRawAxis(0);
 
 		// Claw Code
 		// KnoxKode for PID Forks
@@ -45,7 +40,7 @@ public class OperatorControls {
 		if (Motors.operator.getPOV() == 90) {
 			Motors.forksMotor.set(75000);
 		}
-		if (Motors.operator.getRawButton(5)) {
+		if (Motors.operator.getRawButton(9)) {
 			Motors.forksMotor.set(200);
 		}
 		double talCur = Motors.forksMotor.getOutputCurrent();
@@ -53,12 +48,6 @@ public class OperatorControls {
 		if (talFil > 15) {
 			Motors.forksMotor.set(Motors.forksMotor.getPosition());
 		}
-		if (Motors.operator.getRawButton(12)) {
-			Motors.forksMotor.setPosition(0);
-			Motors.elevatorMaster.set(Motors.elevatorMaster.getEncPosition());
-		}
-		// Motors.forksMotor.changeControlMode(ControlMode.PercentVbus);
-		// Motors.forksMotor.set(analogFork);
 
 		if (talFil > 15) {
 			Motors.forksMotor.set(Motors.forksMotor.getPosition());
@@ -68,19 +57,19 @@ public class OperatorControls {
 
 		// Tray Code
 		if (Motors.operator.getRawButton(6)) {
-			if (Sensors.trayExtended.get()) {
-				Motors.trayMotor.set(-1);
-				if (Motors.trayMotor.getOutputCurrent() > 15) {
-					Motors.trayMotor.set(0);
-				}
-			}
-			if (Sensors.trayRetracted.get()) {
-				Motors.trayMotor.set(1);
-				if (Motors.trayMotor.getOutputCurrent() > 15) {
-					Motors.trayMotor.set(0);
-				}
+			Motors.trayMotor.set(1);
+			if (Motors.trayMotor.getOutputCurrent() > 15) {
+				Motors.trayMotor.set(0);
 			}
 		}
+
+		if (Motors.operator.getRawButton(8)) {
+			Motors.trayMotor.set(-1);
+			if (Motors.trayMotor.getOutputCurrent() > 15) {
+				Motors.trayMotor.set(0);
+			}
+		}
+
 		// End Tray Code
 
 		// Roller Code
@@ -103,16 +92,45 @@ public class OperatorControls {
 		// End Roller Code
 
 		// Elevator Code TODO
-
-		if (Motors.operator.getRawButton(7)) {
-			++elevatorPos;
-			if(elevatorPos > 7){
+		int offset = 0;
+		if (Sensors.trayExtended.get()) {
+			offset = 8;
 		}
-			}
 
-//		if (Motors.operator.getRawButton(5)) {
-//			elevatorPositionEU = 2;
-//		}
+		boolean inc = Motors.operator.getRawButton(7);
+		boolean dec = Motors.operator.getRawButton(5);
+
+		if(elevatorCooldown.get() > ELEVATOR_COOLDOWN){
+			elevatorCooldown.stop();
+			elevatorCooldown.reset();
+		}
+		
+		if (elevatorCooldown.get() == 0) {
+			if (inc) {
+				if (level < 5) {
+					++level;
+				}
+				elevatorPositionEU = elevatorPos[level];
+				// elevatorPositionEU = .5 + offset + (level * 12.1);
+			}
+			if (dec) {
+				if (level > 0) {
+					--level;
+				}
+				elevatorPositionEU = elevatorPos[level];
+
+			}
+			
+			if (inc || dec) {
+				elevatorCooldown.start();
+			}
+		}
+		SmartDashboard.putString("level", String.valueOf(level));
+
+		if (Motors.operator.getRawButton(12)
+				&& (analogElevator > .1 || analogElevator < -.1)) {
+
+		}
 
 		SmartDashboard
 				.putString("EU value", String.valueOf(elevatorPositionEU));
@@ -131,4 +149,5 @@ public class OperatorControls {
 		// Elevator Code End
 
 	}
+
 }

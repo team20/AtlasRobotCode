@@ -12,13 +12,17 @@ public class OperatorControls {
 	Rollers rollers = new Rollers(LEFT_ROLLER_PORT, RIGHT_ROLLER_PORT);
 
 	Forks forks = new Forks(FORKS_PORT);
-
-	Robot robot = new Robot();
+	
+	StackPlace stacker = new StackPlace();
 
 	Elevator elevator = new Elevator(ELEVATOR_MASTER_PORT, ELEVATOR_SLAVE_ONE,
 			ELEVATOR_SLAVE_TWO, ELEVATOR_SLAVE_THREE);
 
 	Joystick Operator = new Joystick(1);
+
+	public T20CANServoEnc elevatorMaster;
+	private final double ELEVATOR_P = 0.8, ELEVATOR_I = 0.0001,
+			ELEVATOR_D = 0.05;
 
 	// For Claw Positions
 	public double p = .5;
@@ -32,20 +36,29 @@ public class OperatorControls {
 	public boolean trayBool = false;
 
 	public void opControls() {
+		elevator.checkElevator();
+		forks.checkForks();
+
+		elevatorMaster = new T20CANServoEnc(ELEVATOR_MASTER_PORT, new int[] {
+				ELEVATOR_SLAVE_ONE, ELEVATOR_SLAVE_TWO, ELEVATOR_SLAVE_THREE },
+				ELEVATOR_P, ELEVATOR_I, ELEVATOR_D, 0, -28000, 0);
+		elevatorMaster.setXDScale(0, 60, "inches");
+		elevatorMaster.reverseSensor(true);
 
 		double elevatorEnc = Elevator.master.getEncPosition();
 		double analogElevator = Operator.getRawAxis(3);
 		double analogFork = -Operator.getRawAxis(0);
 		double forkState = Operator.getPOV();
-		
-		//Interrupt!
-		if(Operator.getRawButton(9)){
+
+		// Interrupt!
+		if (Operator.getRawButton(9)) {
 			rollers.stopRoll();
 			forks.set(0);
 			elevator.set(0);
 		}
-		//End Interrupt!
 		
+		// End Interrupt!
+
 		// Forks Code
 		forks.set(analogFork);
 		// End Forks Code
@@ -69,18 +82,19 @@ public class OperatorControls {
 		// End Rollers Code
 
 		// Elevator Code
-		elevator.set(analogElevator);
-		// Elevator Code
-
-		// Tray Code
-		if (Operator.getRawButton(6)) {
-			trayBool = !trayBool;
-			if (trayBool) {
-				robot.tray.trayExtend();
-			} else {
-				robot.tray.trayExtend();
-			}
+		if (Operator.getRawButton(5)) {
+			elevatorMaster.setPosition(500);
 		}
+		if (Operator.getRawButton(7)) {
+			elevatorMaster.setPosition(900);
+		}
+		if (Operator.getRawButton(12)) {
+			stacker.PlaceStack();
+		}
+		// Elevator Code
+		
+		// Tray Code
+	
 		// End Tray Code
 
 		// KnoxKode for PID Forks

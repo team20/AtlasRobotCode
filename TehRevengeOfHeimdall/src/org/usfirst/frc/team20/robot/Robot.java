@@ -25,6 +25,8 @@ public class Robot extends IterativeRobot {
 	
 	
 	DriveControls dr = new DriveControls(0);
+	OperatorControls op = new OperatorControls();
+	
 	
 	public static  Tray tray = new Tray(TRAY_PORT);
 	 Rollers rollers = new Rollers(LEFT_ROLLER_PORT, RIGHT_ROLLER_PORT);
@@ -67,10 +69,8 @@ public class Robot extends IterativeRobot {
 
 	public void teleopPeriodic() {
 
-		elevator.checkElevator();
-		forks.checkForks();
-		tray.checkTray();
-
+		op.opControls();
+		
 		SmartDashboard.putString("Elevator Master = ",
 				" " + elevator.master.getOutputCurrent());
 		SmartDashboard.putString("Elevator slave one =", ""

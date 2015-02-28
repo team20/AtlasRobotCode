@@ -13,24 +13,19 @@ public class OperatorControls {
 	public static double ramp = 1500;
 	public static double talFil = 0;
 
-	private static Timer elevatorTimer = new Timer();
-	private static double ELEVATOR_COOLDOWN = .1;
-	private static boolean maintainSetpoint = false;
 	private static double elevatorPositionEU = 0;
-	private static boolean trayBool = false;
-	
+
 	private static double level0 = 1;
-	private static double level1 = 8.5;
+	private static double level1 = 13.1;
 	private static double level2 = 20.6;
 	private static double level3 = 32.1;
 	private static double level4 = 44.8;
 	private static double level5 = 56.9;
 	private static double level6 = 60;
-	
 
 	// TODO Update Axis Values!
 	public static void opControls() {
-
+		int elevatorPos = 0;
 		double elevatorEnc = Motors.elevatorMaster.getEncPosition();
 		double analogElevator = Motors.operator.getRawAxis(1);
 		double analogFork = -Motors.operator.getRawAxis(2);
@@ -38,37 +33,32 @@ public class OperatorControls {
 
 		// Claw Code
 		// KnoxKode for PID Forks
-		 if (Motors.operator.getPOV() == 270) {
-		 Motors.forksMotor.set(25000);
-		 }
-		 if (Motors.operator.getPOV() == 180) {
-		 Motors.forksMotor.set(59000);
-		 }
-		 if (Motors.operator.getPOV() == 0) {
-		 Motors.forksMotor.set(16000);
-		 }
-		 if (Motors.operator.getPOV() == 90) {
-		 Motors.forksMotor.set(75000);
-		 }
-		 if (Motors.operator.getRawButton(5)) {
-		 Motors.forksMotor.set(200);
-		 }
-		 double talCur = Motors.forksMotor.getOutputCurrent();
-		 talFil = talFil * .9 + talCur * .1;
-		 SmartDashboard.putString("Current fork = ", "" + talFil);
-		 SmartDashboard.putString("Fork enc = ",
-		 "" + Motors.forksMotor.getEncPosition());
-		 if (talFil > 15) {
-		 Motors.forksMotor.set(Motors.forksMotor.getPosition());
-		 }
-		 SmartDashboard.putString("Fork sp = ",
-		 "" + Motors.forksMotor.getSetpoint());
-		 if (Motors.operator.getRawButton(12)) {
-		 Motors.forksMotor.setPosition(0);
-		 Motors.elevatorMaster.set(Motors.elevatorMaster.getEncPosition());
-		 }
-//		Motors.forksMotor.changeControlMode(ControlMode.PercentVbus);
-//		Motors.forksMotor.set(analogFork);
+		if (Motors.operator.getPOV() == 270) {
+			Motors.forksMotor.set(25000);
+		}
+		if (Motors.operator.getPOV() == 180) {
+			Motors.forksMotor.set(59000);
+		}
+		if (Motors.operator.getPOV() == 0) {
+			Motors.forksMotor.set(16000);
+		}
+		if (Motors.operator.getPOV() == 90) {
+			Motors.forksMotor.set(75000);
+		}
+		if (Motors.operator.getRawButton(5)) {
+			Motors.forksMotor.set(200);
+		}
+		double talCur = Motors.forksMotor.getOutputCurrent();
+		talFil = talFil * .9 + talCur * .1;
+		if (talFil > 15) {
+			Motors.forksMotor.set(Motors.forksMotor.getPosition());
+		}
+		if (Motors.operator.getRawButton(12)) {
+			Motors.forksMotor.setPosition(0);
+			Motors.elevatorMaster.set(Motors.elevatorMaster.getEncPosition());
+		}
+		// Motors.forksMotor.changeControlMode(ControlMode.PercentVbus);
+		// Motors.forksMotor.set(analogFork);
 
 		if (talFil > 15) {
 			Motors.forksMotor.set(Motors.forksMotor.getPosition());
@@ -78,11 +68,17 @@ public class OperatorControls {
 
 		// Tray Code
 		if (Motors.operator.getRawButton(6)) {
-			trayBool = !trayBool;
-			if (trayBool == true) {
+			if (Sensors.trayExtended.get()) {
 				Motors.trayMotor.set(-1);
-			} else if (trayBool == false) {
+				if (Motors.trayMotor.getOutputCurrent() > 15) {
+					Motors.trayMotor.set(0);
+				}
+			}
+			if (Sensors.trayRetracted.get()) {
 				Motors.trayMotor.set(1);
+				if (Motors.trayMotor.getOutputCurrent() > 15) {
+					Motors.trayMotor.set(0);
+				}
 			}
 		}
 		// End Tray Code
@@ -105,20 +101,18 @@ public class OperatorControls {
 			Motors.rollersRight.set(.5);
 		}
 		// End Roller Code
-		
-		//Elevator Code TODO
-		
-		if (Motors.operator.getRawButton(8)) {
-			elevatorPositionEU = 30;
-		}
+
+		// Elevator Code TODO
 
 		if (Motors.operator.getRawButton(7)) {
-			elevatorPositionEU = 60;
+			++elevatorPos;
+			if(elevatorPos > 7){
 		}
+			}
 
-		if (Motors.operator.getRawButton(5)) {
-			elevatorPositionEU = 2;
-		}
+//		if (Motors.operator.getRawButton(5)) {
+//			elevatorPositionEU = 2;
+//		}
 
 		SmartDashboard
 				.putString("EU value", String.valueOf(elevatorPositionEU));
@@ -134,8 +128,7 @@ public class OperatorControls {
 		Motors.elevatorMaster.enableControl();
 		Motors.elevatorMaster.setXEU(elevatorPositionEU);
 
-		//Elevator Code End
+		// Elevator Code End
 
 	}
-
 }

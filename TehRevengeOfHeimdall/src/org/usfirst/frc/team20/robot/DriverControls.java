@@ -7,7 +7,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class DriverControls {
   static int test = 0;
   static double angle = 0;
-	public static void robotDrive() {
+	
+  public static void robotDrive() {
 	
 
 		double speed = Motors.driver.getRawAxis(1);
@@ -15,7 +16,7 @@ public class DriverControls {
 		double lturn = Motors.driver.getRawAxis(3);
 		double rturn = Motors.driver.getRawAxis(2);
 		double values[] = new double[4];// FL BL FR BR
-		SmartDashboard.putString("test =",  "" + "t2");
+		
 		values[0] = -(speed + rturn - lturn + strafe);// FL
 		values[1] = -(speed + rturn - lturn - strafe);// BL
 		values[2] = (speed + lturn - rturn - strafe);// FR
@@ -27,12 +28,12 @@ public class DriverControls {
 			if (values[i] < -1)
 				values[i] = -1;
 		}
-		SmartDashboard.putString("Elevator Master1 ==", "" + "test2");
+		
 		Motors.fLeft.set(values[0]);
 		Motors.bLeft.set(values[1]);
 		Motors.fRight.set(values[2]);
 		Motors.bRight.set(values[3]);
-		SmartDashboard.putString("test =", "2");
+		
 		if (Motors.driver.getRawButton(1)) {
 			Motors.trayMotor.set(1);
 		}
@@ -46,7 +47,7 @@ public class DriverControls {
 			Motors.trayMotor.set(0);
 
 		}
-		SmartDashboard.putString("test =    ", "3");
+		
 	}
 
 	private static double filter(double input) {
@@ -76,6 +77,7 @@ public class DriverControls {
 		double strafe = filter(Motors.driver.getRawAxis(0));
 		double lturn = filter(Motors.driver.getRawAxis(3));
 		double rturn = filter(Motors.driver.getRawAxis(2));
+		
 		test++;
 
 		if (Motors.driver.getRawButton(5)) {
@@ -92,10 +94,7 @@ public class DriverControls {
 			
 		}
 		
-	
-	//	SmartDashboard.putString("Elevator Master22 =", ""
-		//		+ test);
-		if ((lturn == 0 && rturn == 0 && speed == 0 && strafe == 0)
+	if ((lturn == 0 && rturn == 0 && speed == 0 && strafe == 0)
 				&& !(angle > lastGyro + 1f || angle < lastGyro - 1f)) {
 			if (angle > holdAngle + 8f) {
 				Motors.fLeft.set(-1);

@@ -52,7 +52,6 @@ public class AutoModes {
 		Gyro g1 = new Gyro(1);
 		g1.initGyro();
 		g1.reset();
-		chooser = new SendableChooser();
 		
 	class Autonomous1 {
 		//insert main autonomous code here

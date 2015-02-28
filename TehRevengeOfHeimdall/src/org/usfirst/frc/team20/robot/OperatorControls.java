@@ -18,6 +18,15 @@ public class OperatorControls {
 	private static boolean maintainSetpoint = false;
 	private static double elevatorPositionEU = 0;
 	private static boolean trayBool = false;
+	
+	private static double level0 = 1;
+	private static double level1 = 8.5;
+	private static double level2 = 20.6;
+	private static double level3 = 32.1;
+	private static double level4 = 44.8;
+	private static double level5 = 56.9;
+	private static double level6 = 60;
+	
 
 	// TODO Update Axis Values!
 	public static void opControls() {

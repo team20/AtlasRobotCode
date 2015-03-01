@@ -36,9 +36,11 @@ public class DriverControls {
 		
 		if (Motors.driver.getRawButton(1)) {
 			Motors.trayMotor.set(1);
+			OperatorControls.trayExtended = true;
 		}
 		if (Motors.driver.getRawButton(2)) {
 			Motors.trayMotor.set(-1);
+			OperatorControls.trayExtended = false;
 		}
 		if (Motors.driver.getRawButton(3)) {
 			Motors.trayMotor.set(0);

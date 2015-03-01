@@ -17,9 +17,10 @@ public class OperatorControls {
 	private static final double ELEVATOR_COOLDOWN = .7;
 	
 	private static double elevatorPositionEU = 0;
-	private static boolean trayBool = false;
-	private static double elevatorPos[] = { .5, 12.6, 24.7, 36.8, 48.9, 60 };
-	public static int level = 0;
+	private static boolean manualControl = false;
+	public static boolean trayExtended = false;
+	//private static double elevatorPos[] = { .5, 12.6, 24.7, 36.8, 48.9, 60 };
+	public static double level = 0;
 
 	// TODO Update Axis Values!
 	public static void opControls() {
@@ -64,6 +65,7 @@ public class OperatorControls {
 			if (Motors.trayMotor.getOutputCurrent() > 15) {
 				Motors.trayMotor.set(0);
 			}
+			trayExtended = true;
 		}
 
 		if (Motors.operator.getRawButton(8)) {
@@ -71,6 +73,7 @@ public class OperatorControls {
 			if (Motors.trayMotor.getOutputCurrent() > 15) {
 				Motors.trayMotor.set(0);
 			}
+			trayExtended = false;
 		}
 
 		// End Tray Code
@@ -95,46 +98,63 @@ public class OperatorControls {
 		// End Roller Code
 
 		// Elevator Code TODO
-//		int offset = 0;
-//		if (Sensors.trayExtended.get()) {
-//			offset = 8;
-//		}
-//
-//		boolean inc = Motors.operator.getRawButton(7);
-//		boolean dec = Motors.operator.getRawButton(5);
-//
-//		if(elevatorCooldown.get() > ELEVATOR_COOLDOWN){
-//			elevatorCooldown.stop();
-//			elevatorCooldown.reset();
-//		}
-//		
-//		if (elevatorCooldown.get() == 0) {
-//			if (inc) {
-//				if (level < 5) {
-//					++level;
-//				}
-//				elevatorPositionEU = elevatorPos[level];
-//				// elevatorPositionEU = .5 + offset + (level * 12.1);
-//			}
-//			if (dec) {
-//				if (level > 0) {
-//					--level;
-//				}
-//				elevatorPositionEU = elevatorPos[level];
-//
-//			}
-//			
-//			if (inc || dec) {
-//				elevatorCooldown.start();
-//			}
-//		}
-//		SmartDashboard.putString("level", String.valueOf(level));
-//
-//		if (Motors.operator.getRawButton(12)
-//				&& (analogElevator > .1 || analogElevator < -.1)) {
-//
-//		}
-//
+		
+		//preset Positions
+		double offset = 0.5;
+		double toNextLevelUp = 0;
+		
+		if (trayExtended) {
+			offset = 7.5;
+		}
+
+		boolean inc = Motors.operator.getRawButton(7);
+		boolean dec = Motors.operator.getRawButton(5);
+
+		if(elevatorCooldown.get() > ELEVATOR_COOLDOWN){
+			elevatorCooldown.stop();
+			elevatorCooldown.reset();
+		}
+		
+		if (elevatorCooldown.get() == 0) {
+			if ((inc || dec) && manualControl == true){
+				manualControl = false;
+				for (double i=0; i<12.1; i+=0.1){
+					if ((Motors.elevatorMaster.getXEU()-offset)%12.1 == 0){
+						level = (Motors.elevatorMaster.getXEU() - offset)/12.1;
+					}
+					else{
+						toNextLevelUp += i;
+					}
+				}
+				level -= 1;
+			}
+			if (inc) {
+				if (level < 5) {
+					++level;
+				}
+				elevatorPositionEU = offset + toNextLevelUp + (level * 12.1);
+			}
+			if (dec) {
+				if (level > 0) {
+					--level;
+				}
+				elevatorPositionEU = offset - (12.1 -toNextLevelUp) + level * 12.1;
+			}
+			
+			if (inc || dec) {
+				elevatorCooldown.start();
+			}
+		}
+		SmartDashboard.putString("level", String.valueOf(level));
+		
+		//switch to manual control
+		if (Motors.operator.getRawButton(12)){
+			manualControl = true;
+		}
+		if (manualControl == true && (analogElevator > .1 || analogElevator < -.1)) {
+			elevatorPositionEU = Motors.elevatorMaster.getXEU()*-1+(-30*analogElevator);
+		}
+
 		SmartDashboard
 				.putString("EU value", String.valueOf(elevatorPositionEU));
 		SmartDashboard.putString("Slave 0 Current", String
@@ -147,10 +167,15 @@ public class OperatorControls {
 				String.valueOf(Motors.elevatorMaster.getOutputCurrent()));
 //
 //		Motors.elevatorMaster.enableControl();
-//		Motors.elevatorMaster.setXEU(elevatorPositionEU);
+		Motors.elevatorMaster.setXEU(elevatorPositionEU);
 		SmartDashboard.putString("EU value", String.valueOf(Motors.elevatorMaster.getXEU()));
-		Motors.elevatorMaster.setXEU(Motors.elevatorMaster.getXEU()*-1+(-30*analogElevator));
+	
+		// manual control for elevator
 		
+		/*
+		if (analogElevator > .1 || analogElevator < -.1) {
+			Motors.elevatorMaster.setXEU(Motors.elevatorMaster.getXEU()*-1+(-30*analogElevator));
+		}*/
 		// Elevator Code End
 
 	}

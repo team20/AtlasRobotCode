@@ -72,9 +72,9 @@ public class DriverControls {
 				|| Motors.trayMotor.getOutputCurrent() > 20) {
 			Motors.trayMotor.set(0);
 		}
-		
-		double speed = filter(Motors.driver.getRawAxis(1));
-		double strafe = filter(Motors.driver.getRawAxis(0));
+		double ratio = -filter(Motors.driver.getRawAxis(5));
+		double speed = ratio * filter(Motors.driver.getRawAxis(1));
+		double strafe = ratio * filter(Motors.driver.getRawAxis(0));
 		double lturn = filter(Motors.driver.getRawAxis(3));
 		double rturn = filter(Motors.driver.getRawAxis(2));
 		

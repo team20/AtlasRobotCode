@@ -1,6 +1,7 @@
 package org.usfirst.frc.team20.robot;
 
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class OperatorControls {
@@ -28,31 +29,33 @@ public class OperatorControls {
 
 		// Claw Code
 		// KnoxKode for PID Forks
-		if (Motors.operator.getPOV() == 270) {
-			Motors.forksMotor.set(25000);
-		}
-		if (Motors.operator.getPOV() == 180) {
-			Motors.forksMotor.set(59000);
-		}
-		if (Motors.operator.getPOV() == 0) {
-			Motors.forksMotor.set(16000);
-		}
-		if (Motors.operator.getPOV() == 90) {
-			Motors.forksMotor.set(75000);
-		}
-		if (Motors.operator.getRawButton(9)) {
-			Motors.forksMotor.set(200);
-		}
-		double talCur = Motors.forksMotor.getOutputCurrent();
-		talFil = talFil * .9 + talCur * .1;
-		if (talFil > 15) {
-			Motors.forksMotor.set(Motors.forksMotor.getPosition());
-		}
-
-		if (talFil > 15) {
-			Motors.forksMotor.set(Motors.forksMotor.getPosition());
-		}
+//		if (Motors.operator.getPOV() == 270) {
+//			Motors.forksMotor.set(25000);
+//		}
+//		if (Motors.operator.getPOV() == 180) {
+//			Motors.forksMotor.set(59000);
+//		}
+//		if (Motors.operator.getPOV() == 0) {
+//			Motors.forksMotor.set(16000);
+//		}
+//		if (Motors.operator.getPOV() == 90) {
+//			Motors.forksMotor.set(75000);
+//		}
+//		if (Motors.operator.getRawButton(9)) {
+//			Motors.forksMotor.set(200);
+//		}
+//		double talCur = Motors.forksMotor.getOutputCurrent();
+//		talFil = talFil * .9 + talCur * .1;
+//		if (talFil > 15) {
+//			Motors.forksMotor.set(Motors.forksMotor.getPosition());
+//		}
+//
+//		if (talFil > 15) {
+//			Motors.forksMotor.set(Motors.forksMotor.getPosition());
+//		}
 		// End KnoxKode
+		Motors.forksMotor.changeControlMode(ControlMode.PercentVbus);
+		Motors.forksMotor.set(analogFork);
 		// Fork Code End
 
 		// Tray Code
@@ -92,46 +95,46 @@ public class OperatorControls {
 		// End Roller Code
 
 		// Elevator Code TODO
-		int offset = 0;
-		if (Sensors.trayExtended.get()) {
-			offset = 8;
-		}
-
-		boolean inc = Motors.operator.getRawButton(7);
-		boolean dec = Motors.operator.getRawButton(5);
-
-		if(elevatorCooldown.get() > ELEVATOR_COOLDOWN){
-			elevatorCooldown.stop();
-			elevatorCooldown.reset();
-		}
-		
-		if (elevatorCooldown.get() == 0) {
-			if (inc) {
-				if (level < 5) {
-					++level;
-				}
-				elevatorPositionEU = elevatorPos[level];
-				// elevatorPositionEU = .5 + offset + (level * 12.1);
-			}
-			if (dec) {
-				if (level > 0) {
-					--level;
-				}
-				elevatorPositionEU = elevatorPos[level];
-
-			}
-			
-			if (inc || dec) {
-				elevatorCooldown.start();
-			}
-		}
-		SmartDashboard.putString("level", String.valueOf(level));
-
-		if (Motors.operator.getRawButton(12)
-				&& (analogElevator > .1 || analogElevator < -.1)) {
-
-		}
-
+//		int offset = 0;
+//		if (Sensors.trayExtended.get()) {
+//			offset = 8;
+//		}
+//
+//		boolean inc = Motors.operator.getRawButton(7);
+//		boolean dec = Motors.operator.getRawButton(5);
+//
+//		if(elevatorCooldown.get() > ELEVATOR_COOLDOWN){
+//			elevatorCooldown.stop();
+//			elevatorCooldown.reset();
+//		}
+//		
+//		if (elevatorCooldown.get() == 0) {
+//			if (inc) {
+//				if (level < 5) {
+//					++level;
+//				}
+//				elevatorPositionEU = elevatorPos[level];
+//				// elevatorPositionEU = .5 + offset + (level * 12.1);
+//			}
+//			if (dec) {
+//				if (level > 0) {
+//					--level;
+//				}
+//				elevatorPositionEU = elevatorPos[level];
+//
+//			}
+//			
+//			if (inc || dec) {
+//				elevatorCooldown.start();
+//			}
+//		}
+//		SmartDashboard.putString("level", String.valueOf(level));
+//
+//		if (Motors.operator.getRawButton(12)
+//				&& (analogElevator > .1 || analogElevator < -.1)) {
+//
+//		}
+//
 		SmartDashboard
 				.putString("EU value", String.valueOf(elevatorPositionEU));
 		SmartDashboard.putString("Slave 0 Current", String
@@ -142,10 +145,12 @@ public class OperatorControls {
 				.valueOf(Motors.elevatorMaster.slaves[2].getOutputCurrent()));
 		SmartDashboard.putString("Master ",
 				String.valueOf(Motors.elevatorMaster.getOutputCurrent()));
-
-		Motors.elevatorMaster.enableControl();
-		Motors.elevatorMaster.setXEU(elevatorPositionEU);
-
+//
+//		Motors.elevatorMaster.enableControl();
+//		Motors.elevatorMaster.setXEU(elevatorPositionEU);
+		SmartDashboard.putString("EU value", String.valueOf(Motors.elevatorMaster.getXEU()));
+		Motors.elevatorMaster.setXEU(Motors.elevatorMaster.getXEU()*-1+(-30*analogElevator));
+		
 		// Elevator Code End
 
 	}

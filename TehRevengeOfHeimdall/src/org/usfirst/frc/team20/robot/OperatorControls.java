@@ -168,7 +168,9 @@ public class OperatorControls {
 
 		if (Motors.operator.getRawButton(12)
 				&& (analogElevator > .1 || analogElevator < -.1)) {
-			manualControl = true;
+			if (manualControl == false){
+				manualControl = true;
+			}
 			elevatorPositionEU = Motors.elevatorMaster.getXEU() * -1
 					+ (-30 * analogElevator);
 		}

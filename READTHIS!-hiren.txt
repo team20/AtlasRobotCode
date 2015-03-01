@@ -1,0 +1,23 @@
+Hello people at the practice field, here is some stuff to know about the robot!
+
+When you first start to use it after a code reupload or a power cycle run the automode to allow the forks to go to home position. Then turn on teleop and allow the elevator to go to home position (you might need to go and step on the carriage to make it hit the elevator limit switch).
+
+If any weird problem occurs with the set positions comment them out and uncomment out the manual stuff, let the drivers practice please.
+
+For Jason:
+Your field centric is still whack
+Also when at the HP station get the timing down right for the tray button pushes, they require proper timing for the shimmy move.
+
+For Audrey:
+Button 9 should open the forks fully and the D-pad fork stuff should work.
+For the elevator stuff 7 increments up a level and 5 decrements down.
+
+Button 6 extends the tray and button 8 retracts the tray (will make this a toggle switch when the limit switches are fixed).
+
+The rollers are still the same button 1 is stop/ button 2 is intake/ button 3 is rotate rc's if handle is in the way/ and button 4 is backdrive. Make sure you use the rollers during practice, they should help with collecting totes!
+Also is someone annoys you, you can shoot a tote at them :)
+
+To take manual override of either the forks or elevator you need to keep the joystick buttons depressed while moving the joystick to take manual control. The button depression on the joystick override is prevention for you hitting the joystick on accident. 
+
+For Jagen:
+Please look at the field centirc code again, it's not working. Also you or Jason can look into remapping the robot centric drive to the d-pad of the driver controller.

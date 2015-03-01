@@ -28,7 +28,7 @@ public class OperatorControls {
 	public static void opControls() {
 		double elevatorActual = 0;
 		double analogElevator = Motors.operator.getRawAxis(3);
-		double analogFork = -Motors.operator.getRawAxis(0);
+		double analogFork = Motors.operator.getRawAxis(0);
 		int povVal = Motors.operator.getPOV();
 
 		// Claw Code

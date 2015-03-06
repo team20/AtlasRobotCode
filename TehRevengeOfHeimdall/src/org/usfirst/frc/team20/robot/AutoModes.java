@@ -56,61 +56,61 @@ public class AutoModes {
 	class Autonomous1 {
 		//this is the main autonomous mode 
 		public Autonomous1() {
-			gyro.reset();
+	
 		}
 	}
 
 	class Autonomous2 {
 		public Autonomous2() {
-		  gyro.reset();
+	
 		}
 	}
 
 	class Autonomous3 {
 		public Autonomous3() {
-			gyro.reset();
+		
 		}
 	}
 
 	class Autonomous4 {
 		public Autonomous4() {
-			gyro.reset();
+	
 		}
 	}
 
 	class Autonomous5 {
 		public Autonomous5() {
-			gyro.reset();
+	
 		}
 	}
 
 	class Autonomous6 {
 		public Autonomous6() {
-			gyro.reset();
+	
 		}
 	}
 
 	class Autonomous7 {
 		public Autonomous7() {
-			gyro.reset();
+	
 		}
 	}
 
 	class Autonomous8 {
 		public Autonomous8() {
-			gyro.reset();
+	
 		}
 	}
 
 	class Autonomous9 {
 		public Autonomous9() {
-			gyro.reset();
+	
 		}
 	}
 
 	class Autonomous10 {
 		public Autonomous10() {
-			gyro.reset();
+	
 		}
 	}
 	

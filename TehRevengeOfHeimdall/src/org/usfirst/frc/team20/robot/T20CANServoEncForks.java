@@ -6,6 +6,7 @@
 package org.usfirst.frc.team20.robot;
 
 import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 //import java.lang.*;
@@ -18,12 +19,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  *         where position control using potentiometer feedback to controller.
  * 
  */
-public class T20CANServoEnc extends CANTalon {
+public class T20CANServoEncForks extends CANTalon {
 	private int masterId;
     private double [] talonCurrFil;
-    protected double totalOutputCurrent = 0;
+    protected double totalOutputCurrent = 1;
     public double currentLimit = 30;
-    public double currentLimitOperating = 60;
+    public double currentLimitOperating = 20;
     public boolean tripped = false;
 	private double p;
 	private double i;
@@ -31,20 +32,17 @@ public class T20CANServoEnc extends CANTalon {
 	private int position;
 	private double requestedX;
 	private double controllerX;
-	private double zero;
-	private double span;
+	protected double zero;
+	protected double span;
 	private double deadBand;
 	private boolean enabled;
 	private String canName;
-	private double scaleXDZero;
-	private double scaleXDSpan;
+	protected double scaleXDZero;
+	protected double scaleXDSpan;
 	private String scaleXDUOM;
-	public boolean homed;
+	protected boolean homed;
 	public CANTalon[] slaves;
-	private double homeIncrementTicks;
-	protected double outlierDiff = 0;
-	protected int outlierTalon = -1;
-
+	public double homeCurrent = 5;
 	// never use this constructor.
 	// CanServoPos(int masterId) throws CANTimeoutException {
 	// super(masterId);
@@ -73,11 +71,12 @@ public class T20CANServoEnc extends CANTalon {
 	 * 
 	 * @throws CANTimeoutException
 	 */
-	T20CANServoEnc(int masterId, int[] slaves, double p, double i, double d,
+	T20CANServoEncForks(int masterId, int[] slaves, double p, double i, double d,
 			double zero, double span, double deadBand) {
 		super(masterId);
 		this.enabled = true;
 		this.disableControl();
+		super.set(0);
 		this.slaves = new CANTalon[slaves.length];
 		this.talonCurrFil = new double[slaves.length+1];
 		this.masterId = masterId;
@@ -87,12 +86,12 @@ public class T20CANServoEnc extends CANTalon {
 		this.d = d;
 		this.zero = zero;
 		this.span = span;
-		this.homeIncrementTicks = -((span - zero) * .06);
 		this.setFeedbackDevice(FeedbackDevice.QuadEncoder);
 		this.changeControlMode(ControlMode.Position);
 		// this.configMaxOutputVoltage(12);
 		this.setPID(p, i, d);
 		super.setPosition(zero);
+		super.set(zero);
 		this.controllerX = zero;
 		this.requestedX = zero;
 		this.scaleXDZero = 0;
@@ -159,10 +158,11 @@ public class T20CANServoEnc extends CANTalon {
 	 * 
 	 */
 	public void setXEU(double setPoint) {
-		SmartDashboard.putString("elevator setpoint EU", String.valueOf(setPoint));
+		SmartDashboard.putString("Forks setpoint EU", String.valueOf(setPoint));
 		this.set(this.getEUToTicks(setPoint));
 	}
 
+	
 	/**
 	 * 
 	 * Sets the setpoint for CAN motor controller also performs disable and
@@ -175,26 +175,46 @@ public class T20CANServoEnc extends CANTalon {
 	 * 
 	 */
 	@Override public final void set(double x) {
+		this.requestedX = x;
 		
 		this.sumCurrent();
 		
+		// trip the controller on over current, Set tripped flag and disable further control of axis
 		if (this.tripped || (this.totalOutputCurrent > this.currentLimit)) {
 			this.tripped = true;
 			this.disableControl();
 			return;
 		}
 		
-		this.enableControl();
+		if (super.getControlMode().equals(ControlMode.PercentVbus)) {
+			super.set(x);
+			this.controllerX = x;
+			return;
+		}
+		
+		this.position = super.getEncPosition();
+		
+		// if output current is high (gripping tote) disable control.
+		// set controllerX to encoder position. This will be used later to disable control
+		// and prevent new setpoint from ramping current again. (unitl setpoint change).
+		if (this.totalOutputCurrent > this.currentLimitOperating ){
+			super.set(this.position);
+			// make the setpoint look like pv so controller is not enabled once current drops.
+			this.controllerX = this.requestedX;
+			this.disableControl();
+			return;
+		}
+
 		if(!homed){
 			home();
 			return;
 		}
 		
-		this.requestedX = x;
-		SmartDashboard.putString("elevator setpoint", String.valueOf(this.requestedX));
-		SmartDashboard.putString("elevator setpoint Actual", String.valueOf(this.getSetpoint()));		
+		SmartDashboard.putString("Forks setpoint", String.valueOf(this.requestedX));
+		SmartDashboard.putString("Forks setpoint Actual", String.valueOf(this.getSetpoint()));		
+		SmartDashboard.putString("Forks Total Current", String.valueOf(this.totalOutputCurrent));
 		
-		// do nothing if command out of bounds
+		// limit to zero and span bounds
 		if (this.span < this.zero) {
 			if (this.requestedX > this.zero) {
 				this.requestedX = this.zero;
@@ -212,24 +232,30 @@ public class T20CANServoEnc extends CANTalon {
 		}
 		
 		// check to see if the can position is close enough
-		this.position = super.getEncPosition();
 		// if we are in position turn off controller if it is on
 		if (this.enabled
 				&& Math.abs(this.position - this.requestedX) < this.deadBand) {
+			//super.set(position);
 			this.disableControl();
 			return;
 		}
 
 		// only send can command if it is new position change is significant.
-		if (Math.abs(this.position - this.requestedX) > this.deadBand) {
+		// i.e. if new sp is within deadband of last setpoint.
+		if (Math.abs(this.controllerX - this.requestedX) > this.deadBand) {
 			super.set(this.requestedX);
 			this.controllerX = this.requestedX;
 			this.enableControl();
 		}
-		super.set(this.requestedX);
-		this.controllerX = this.requestedX;
 		
 	}// set
+
+	
+	public void setPosition(int x){
+		return;
+	}
+	
+	
 	public double getXEU() {
 		return this.getTicksToEU(super.getEncPosition());
 	}
@@ -262,7 +288,7 @@ public class T20CANServoEnc extends CANTalon {
 		if (!this.enabled){
 			this.setPID(p, i, d);
 			super.enableControl();
-			}
+		}
 		this.enabled = true;
 	}
 
@@ -275,44 +301,21 @@ public class T20CANServoEnc extends CANTalon {
 		if (this.enabled){
 			this.setPID(0, 0, 0);
 			super.disableControl();
-		}
+			}
 		this.enabled = false;
 	}
-	
-	
-	public void setHomeEU(double EU){
-		this.setHome((int)this.getEUToTicks(EU));
-	}
-	
-	public void setHome(int position){
-		this.position = position;
-		this.requestedX = position;
-		this.controllerX = position;
-		super.setPosition(position);
-	}
-	
-	public void autoHome(){
-		this.homed = false;
-		this.home();
-	}
-	
-	public void setHomeAtCurrentPosition(int pos){
-		
-	}
+
 	
 	public void home(){
-		int pos = super.getEncPosition();
-		SmartDashboard.putString("home position", String.valueOf(pos + this.homeIncrementTicks));
-		super.setPosition(pos);
-		super.set(pos + this.homeIncrementTicks);
-		if(super.isFwdLimitSwitchClosed() || super.isRevLimitSwitchClosed()){
+		this.enableControl();
+		super.setPosition(0);
+		super.set(-2000);
+		if (this.totalOutputCurrent > this.homeCurrent) {
 			this.homed = true;
-			super.setPosition(this.zero+100);
+			super.setPosition(this.zero-3000);
 			this.set(this.zero);
 			this.position = (int)this.zero;
-			
 		}
-		SmartDashboard.putString("homed", String.valueOf(this.homed));
 	}
 
 	/**
@@ -345,9 +348,6 @@ public class T20CANServoEnc extends CANTalon {
 	}
 	private void sumCurrent(){
 		double mi = 0;
-		this.outlierDiff = 0;
-		this.outlierTalon = -1;
-		
 		for(int i=0;i< this.slaves.length;i++){
 			this.talonCurrFil[i]= this.talonCurrFil[i]*.9+this.slaves[i].getOutputCurrent()*.1;
 		}
@@ -358,19 +358,12 @@ public class T20CANServoEnc extends CANTalon {
 			 mi = mi + this.talonCurrFil[i];
 		}
 		
-		double mean = mi / this.talonCurrFil.length;
-		for(int i = 0; i < this.talonCurrFil.length; ++i){
-			double diff = Math.abs(this.talonCurrFil[i] - mean);
-			if(diff > this.outlierDiff){
-				this.outlierDiff = diff;
-				this.outlierTalon = i;
-			}
-		}
-
 		this.totalOutputCurrent = mi;
  	}
 	
-	
+	public void resetTrippedFlag(){
+		this.tripped=false;
+	}
 	
 	
 

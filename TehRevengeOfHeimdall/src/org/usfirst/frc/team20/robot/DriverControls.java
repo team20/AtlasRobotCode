@@ -45,7 +45,7 @@ public class DriverControls {
 		if (Motors.driver.getRawButton(3)) {
 			Motors.trayMotor.set(0);
 		}
-		if (Motors.trayMotor.getOutputCurrent() > 20) {
+		if (Robot.trayMotorFilteredCurrent > 20) {
 			Motors.trayMotor.set(0);
 
 		}
@@ -154,6 +154,7 @@ public class DriverControls {
 		Motors.bRight.set(values[3]);
 		++msecs;
 
+		SmartDashboard.putString("Gyro srsly gyro" , "" + Sensors.gyro.getAngle());
 		
 	}
 	

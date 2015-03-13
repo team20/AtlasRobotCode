@@ -28,11 +28,13 @@ public class Motors {
 			ELEVATOR_SLAVE_THREE = 8;
 
 	// CANTalons and Roller Talons PORTS
-	public static CANTalon fLeft, bLeft, fRight, bRight, 
-			trayMotor, forksMotor;
+   public static CANTalon fLeft, bLeft, fRight, bRight, 
+			trayMotor;
 	
 	public static T20CANServoEnc elevatorMaster;
-
+ 
+	public static T20CANServoEncForks  forksMotor;
+	
 	public static Talon rollersLeft, rollersRight;
 
 	// Initialize Controllers
@@ -40,6 +42,9 @@ public class Motors {
 	public static Joystick operator = new Joystick(OPERATOR_JOYSTICK_SLOT);
 
 	private static final double ELEVATOR_P = 0.7, ELEVATOR_I = 0.0001, ELEVATOR_D = 0.09;
+	public static double FORKS_P = .3;
+	public static double FORKS_I = .0001;
+	public static double FORKS_D = .2; 
 	
 	// Rest of the INITIALIZATIONS
 	public static void initi(){
@@ -51,17 +56,26 @@ public class Motors {
 
 		// Initialize Tray
 		trayMotor = new CANTalon(TRAY_PORT);
+		
+		
 
 		// Initialize Elevator
 		elevatorMaster = new T20CANServoEnc(ELEVATOR_MASTER_PORT, 
 				new int[]{ELEVATOR_SLAVE_ONE, ELEVATOR_SLAVE_TWO, ELEVATOR_SLAVE_THREE},
-				ELEVATOR_P, ELEVATOR_I, ELEVATOR_D, 0, -9400, 0);
+				ELEVATOR_P, ELEVATOR_I, ELEVATOR_D, 0, -10000, 0);
 		elevatorMaster.setCloseLoopRampRate(4400);
 		elevatorMaster.setXDScale(0, 60, "inches");
 		elevatorMaster.reverseSensor(true);
+		elevatorMaster.currentLimit = 100;
 		
 		// Initialize Carriage
-		forksMotor = new CANTalon(FORKS_PORT);
+		forksMotor = new T20CANServoEncForks(FORKS_PORT, new int[0],
+				FORKS_P, FORKS_I, FORKS_D, 0, 144000, 1000);
+		forksMotor.setCloseLoopRampRate(1500);
+		forksMotor.setXDScale(34.375, 7.375, "inches");
+		forksMotor.currentLimit = 30;
+		
+		
 		rollersLeft = new Talon(LEFT_ROLLER_PORT);
 		rollersRight = new Talon(RIGHT_ROLLER_PORT);
 	}

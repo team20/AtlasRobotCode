@@ -41,13 +41,13 @@ public class Robot extends IterativeRobot {
 
 		// PID
 	
-		Motors.forksMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
-		Motors.forksMotor.changeControlMode(CANTalon.ControlMode.Position);
-		Motors.forksMotor.setPosition(0);
-		Motors.forksMotor.setPID(OperatorControls.p, OperatorControls.i,
-				OperatorControls.d);
-		Motors.forksMotor.setCloseLoopRampRate(OperatorControls.ramp);
-		Motors.forksMotor.enableControl();
+//		Motors.forksMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+//		Motors.forksMotor.changeControlMode(CANTalon.ControlMode.Position);
+//		Motors.forksMotor.setPosition(0);
+//		Motors.forksMotor.setPID(OperatorControls.p, OperatorControls.i,
+//				OperatorControls.d);
+//		Motors.forksMotor.setCloseLoopRampRate(OperatorControls.ramp);
+//		Motors.forksMotor.enableControl();
 		
 		Sensors.elevatorShort.requestInterrupts();
 		Sensors.elevatorShort.setUpSourceEdge(true, false);
@@ -57,20 +57,30 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during autonomous
 	 */
 	public int counter = 0;
+	public boolean forksHomed= false;
 
 	public void autonomousPeriodic() {
-
-		if (counter == 0) {
-			double talCur = Motors.forksMotor.getOutputCurrent();
-			Motors.forksMotor.set(-85000);
-			OperatorControls.talFil = OperatorControls.talFil * .9 + talCur
-					* .1;
-			if (OperatorControls.talFil > 15) {
-				Motors.forksMotor.setPosition(0);
-				Motors.forksMotor.set(0);
-				counter = 1;
-			}
-		}
+		Motors.trayMotor.set(-1);
+		
+//		SmartDashboard.putString("forks Homed:", ""+forksHomed);
+//		SmartDashboard.putString("Voltage too forks:", ""+Motors.forksMotor.getOutputVoltage());
+//		SmartDashboard.putString("Most recent fork setpoint", ""+Motors.forksMotor.getSetpoint());
+//		SmartDashboard.putString("Forks position", ""+Motors.forksMotor.getPosition());
+//		SmartDashboard.putString("Current to forks", ""+Motors.forksMotor.getOutputCurrent());
+//		
+//		double talCur = Motors.forksMotor.getOutputCurrent();
+//		OperatorControls.talFil = OperatorControls.talFil * .9 + talCur
+//				* .1;
+//		
+//		if (!forksHomed) {
+//			Motors.forksMotor.setPosition(0);
+//			Motors.forksMotor.set(-500);
+//			if (OperatorControls.talFil > 10) {
+//				Motors.forksMotor.setPosition(0);
+//				Motors.forksMotor.set(0);
+//				forksHomed = true;
+//			}
+//		}
 	}
 
 	//@Override
@@ -85,7 +95,10 @@ public class Robot extends IterativeRobot {
 	 */
 	public static boolean fieldCentric = true;
 	public static int test = 0;
+	protected static double trayMotorFilteredCurrent = 0;
 	public void teleopPeriodic() {
+		
+		trayMotorFilteredCurrent = trayMotorFilteredCurrent*.9 + Motors.trayMotor.getOutputCurrent()*.1;
 		
 		SmartDashboard.putString("Elevator Master22 =", ""
 				+ test++);

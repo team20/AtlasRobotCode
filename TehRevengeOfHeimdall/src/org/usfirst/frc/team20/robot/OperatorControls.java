@@ -258,6 +258,18 @@ public class OperatorControls {
 		SmartDashboard.putString("level", String.valueOf(level));
 
 		// switch to manual control
+<<<<<<< HEAD
+=======
+
+		if (Motors.operator.getRawButton(12)
+				&& (analogElevator > .1 || analogElevator < -.1)) {
+			if (manualControl == false){
+				manualControl = true;
+			}
+			elevatorPositionEU = Motors.elevatorMaster.getXEU() * -1
+					+ (-30 * analogElevator);
+		}
+>>>>>>> origin/master
 
 		SmartDashboard
 				.putString("EU value", String.valueOf(elevatorPositionEU));

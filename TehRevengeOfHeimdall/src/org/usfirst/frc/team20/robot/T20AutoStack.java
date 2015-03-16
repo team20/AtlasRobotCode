@@ -2,7 +2,7 @@ package org.usfirst.frc.team20.robot;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public class T20AutoStraighten {
+public class T20AutoStack {
 
 	T20CANServoEncForks fork;
 	T20CANServoEnc elevator;
@@ -15,14 +15,9 @@ public class T20AutoStraighten {
 	private static final double FORK_WIDE_TOTE = 25,
 		FORK_OPEN = 31;
 	
-	private static final int  
-	 STATE_POS0 = 0, STATE_STR0 = 1, STATE_REL0 = 2, 
-	 STATE_POS1 = 3, STATE_STR1 = 4, STATE_REL1 = 5,
-	 STATE_POS2 = 6, STATE_STR2 = 7, STATE_REL2 = 8,
-	 STATE_POS3 = 9, STATE_STR3 = 10, STATE_REL3 = 11,
-	 STATE_POS4 = 12, STATE_STR4 = 13;
+	private static final int STATE_PLACE = 0, STATE_RELEASE = 1, STATE_LOWER = 2, STATE_GRAB = 3, STATE_LIFT = 4;
 	
-	public T20AutoStraighten(T20CANServoEnc elevator, T20CANServoEncForks fork) {
+	public T20AutoStack(T20CANServoEnc elevator, T20CANServoEncForks fork) {
 		this.elevator = elevator;
 		this.fork = fork;
 		this.interrupted = true;
@@ -34,33 +29,15 @@ public class T20AutoStraighten {
 	
 	public double getForkSetpoint(){
 		switch(state){
-		case STATE_POS0:
+		case STATE_PLACE:
 			return fork.getXEU();
-		case STATE_STR0:
+		case STATE_RELEASE:
+			return FORK_OPEN;
+		case STATE_LOWER:
+			return FORK_OPEN;
+		case STATE_GRAB:
 			return FORK_WIDE_TOTE;
-		case STATE_REL0:
-			return FORK_OPEN;
-		case STATE_POS1:
-			return FORK_OPEN;
-		case STATE_STR1:
-			return FORK_WIDE_TOTE;
-		case STATE_REL1:
-			return FORK_OPEN;
-		case STATE_POS2:
-			return FORK_OPEN;
-		case STATE_STR2:
-			return FORK_WIDE_TOTE;
-		case STATE_REL2:
-			return FORK_OPEN;
-		case STATE_POS3:
-			return FORK_OPEN;
-		case STATE_STR3:
-			return FORK_WIDE_TOTE;
-		case STATE_REL3:
-			return FORK_OPEN;
-		case STATE_POS4:
-			return FORK_OPEN;
-		case STATE_STR4:
+		case STATE_LIFT:
 			return FORK_WIDE_TOTE;
 		default:
 			return fork.getXEU();
@@ -69,34 +46,16 @@ public class T20AutoStraighten {
 	
 	public double getElevatorSetpoint(){
 		switch(state){
-		case STATE_POS0:
-			return elevatorPositions[0];
-		case STATE_STR0:
-			return elevatorPositions[0];
-		case STATE_REL0:
-			return elevatorPositions[0];
-		case STATE_POS1:
+		case STATE_PLACE:
 			return elevatorPositions[1];
-		case STATE_STR1:
+		case STATE_RELEASE:
 			return elevatorPositions[1];
-		case STATE_REL1:
-			return elevatorPositions[1];
-		case STATE_POS2:
-			return elevatorPositions[2];
-		case STATE_STR2:
-			return elevatorPositions[2];
-		case STATE_REL2:
-			return elevatorPositions[2];
-		case STATE_POS3:
+		case STATE_LOWER:
+			return elevatorPositions[0];
+		case STATE_GRAB:
+			return elevatorPositions[0];
+		case STATE_LIFT:
 			return elevatorPositions[3];
-		case STATE_STR3:
-			return elevatorPositions[3];
-		case STATE_REL3:
-			return elevatorPositions[3];
-		case STATE_POS4:
-			return elevatorPositions[4];
-		case STATE_STR4:
-			return elevatorPositions[4];
 		default:
 			return elevator.getSetpoint();
 		}
@@ -112,7 +71,7 @@ public class T20AutoStraighten {
 	
 	public void start(){
 		this.interrupted = false;
-		this.state = STATE_POS0;
+		this.state = STATE_PLACE;
 	}
 	
 	public void calculate(){
@@ -128,50 +87,23 @@ public class T20AutoStraighten {
 		SmartDashboard.putString("Calculated Elevator Position", String.valueOf(elevatorPosition));
 		SmartDashboard.putString("Calculated Fork Position", String.valueOf(forkPosition));
 		
-		if(Math.abs(forkSetPoint - forkPosition) > 2 || Math.abs(elevatorSetPoint - elevatorPosition) > 2)
+		if(Math.abs(forkSetPoint - forkPosition) > 1 || Math.abs(elevatorSetPoint - elevatorPosition) > 2)
 			return;
 		
 		switch(state){
-		case STATE_POS0:
-			state = STATE_STR0;
+		case STATE_PLACE:
+			state = STATE_RELEASE;
 			break;
-		case STATE_STR0:
-			state = STATE_REL0;
+		case STATE_RELEASE:
+			state = STATE_LOWER;
 			break;
-		case STATE_REL0:
-			state = STATE_POS1;
+		case STATE_LOWER:
+			state = STATE_GRAB;
 			break;
-		case STATE_POS1:
-			state = STATE_STR1;
+		case STATE_GRAB:
+			state = STATE_LIFT;
 			break;
-		case STATE_STR1:
-			state = STATE_REL1;
-			break;
-		case STATE_REL1:
-			state = STATE_POS2;
-			break;
-		case STATE_POS2:
-			state = STATE_STR2;
-			break;
-		case STATE_STR2:
-			state = STATE_REL2;
-			break;
-		case STATE_REL2:
-			state = STATE_POS3;
-			break;
-		case STATE_POS3:
-			state = STATE_STR3;
-			break;
-		case STATE_STR3:
-			state = STATE_REL3;
-			break;
-		case STATE_REL3:
-			state = STATE_POS4;
-			break;
-		case STATE_POS4:
-			state = STATE_STR4;
-			break;
-		case STATE_STR4:
+		case STATE_LIFT:
 			this.interrupted = true;
 		}
 	}

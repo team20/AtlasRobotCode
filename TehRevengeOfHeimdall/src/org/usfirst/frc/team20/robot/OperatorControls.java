@@ -5,32 +5,45 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class OperatorControls {
 
-	// For Claw
-	public static double p = .5;
-	public static double i = .0001;
-	public static double d = .5;
-	public static double ramp = 1500;
-	public static double talFil = 0;
 	private static boolean manualFork = false;
 
 	// For Elevator
 	private static Timer elevatorCooldown = new Timer();
 	private static final double ELEVATOR_COOLDOWN = .365;
-	private static double elevatorPositionEU = 0;
+	public static double elevatorPositionEU = 0;
 	private static boolean manualControl = false;
 	public static int level = 0;
+	public static boolean toteCatcherBool = false;
 
-	public static boolean trayExtended = false;
-
-	private static double elevatorPos[] = { .1, 12.6, 24.7, 36.8, 48.9, 60 };
-	private static double elevatorTrayPos[] = { 7.125, 12.6, 24.7, 36.8, 48.9,
+	protected static double elevatorPos[] = { 0, 12.6, 24.7, 36.8, 48.9, 60 };
+	protected static double elevatorTrayPos[] = { 4.5, 18.25, 24.7, 36.8, 48.9,
 			60 };
-	static double forksSetpoint = 0;
+
+	protected static double elevatorPosPlace[] = { 1, 3, 5, 14 };
+	protected static double elevatorTrayPlace[] = { 2, 4.5, 9, 14 };
+
+	private static T20AutoStack autoStack = new T20AutoStack(
+			Motors.elevatorMaster, Motors.forksMotor);
+	private static CopyofAutoStack autoCatchStack = new CopyofAutoStack(
+			Motors.elevatorMaster, Motors.forksMotor);
+	private static T20AutoStraighten autoStraighten = new T20AutoStraighten(
+			Motors.elevatorMaster, Motors.forksMotor);
+	private static T20AutoPlace autoPlace = new T20AutoPlace(
+			Motors.elevatorMaster, Motors.forksMotor);
+
+	public static double forksSetpoint = Motors.forksMotor.scaleXDSpan;
 	static boolean trippedForks = false;
+
+	private static int step = 0;
+
+	// For tray
+	public static final boolean TRAY_EXTEND = true, TRAY_RETRACT = false;
+	public static boolean trayExtended = false;
+	public static boolean traySetPoint = TRAY_RETRACT;
 
 	public static void opControls() {
 		double elevatorActual = 0;
-		double analogElevator = Motors.operator.getRawAxis(3);
+		double analogElevator = Motors.operator.getRawAxis(5);
 		double analogFork = Motors.operator.getRawAxis(0);
 		int povVal = Motors.operator.getPOV();
 
@@ -42,21 +55,6 @@ public class OperatorControls {
 			manualFork = false;
 		}
 
-		SmartDashboard.putString("Manual forks override:", "" + manualFork);
-		SmartDashboard.putString("Voltage too forks:",
-				"" + Motors.forksMotor.getOutputVoltage());
-		SmartDashboard.putString("Most recent fork setpoint", ""
-				+ Motors.forksMotor.getSetpoint());
-		SmartDashboard.putString("Forks position",
-				"" + Motors.forksMotor.getPosition());
-		SmartDashboard.putString("Elevator Outlier Difference", ""
-				+ Motors.elevatorMaster.outlierDiff);
-		SmartDashboard.putString("Elevator Outlier Talon", ""
-				+ Motors.elevatorMaster.outlierTalon);
-
-		// Motors.forksMotor.changeControlMode(ControlMode.PercentVbus);
-		// Motors.forksMotor.set(-analogFork);
-
 		if (manualFork == true) {
 			forksSetpoint += -analogFork * 1.5;
 			if (forksSetpoint < Motors.forksMotor.scaleXDSpan) {
@@ -66,103 +64,27 @@ public class OperatorControls {
 			}
 		}
 
-		if (manualFork = false) {
-			if (Motors.operator.getPOV() == 270) {
-				forksSetpoint = 34.5;
-				Motors.forksMotor.tripped = false;
-				// Maybe widest setting
-			} else if (Motors.operator.getPOV() == 180) {
-				forksSetpoint = 17.25;
-				Motors.forksMotor.tripped = false;
-				// Maybe container
-			} else if (Motors.operator.getPOV() == 0) {
-				forksSetpoint = 25.375;
-				Motors.forksMotor.tripped = false;
-				// Maybe tote wide?
-			} else if (Motors.operator.getPOV() == 90) {
-				forksSetpoint = 16;
-				Motors.forksMotor.tripped = false;
-				// Maybe tote narrow
-			}
-		}
-
-		if (Motors.operator.getRawButton(10)) {
-			forksSetpoint = 30.8125;
-			// open at HP
-		}
-
-		SmartDashboard.putString("POV VALUGH",
-				String.valueOf(Motors.operator.getPOV()));
-		// }
-		/*
-		 * double talCur = Motors.forksMotor.getOutputCurrent(); talFil = talFil
-		 * * .95 + talCur * .05; if (talFil > 10) { trippedForks = true;
-		 * forksSetpoint = Motors.forksMotor.getXEU(); }
-		 */
-
-		Motors.forksMotor.setXEU(forksSetpoint);
-
-		SmartDashboard.putString("Manual forks override:", "" + manualFork);
-		SmartDashboard.putString("Voltage too forks:",
-				"" + Motors.forksMotor.getOutputVoltage());
-		SmartDashboard.putString("Forks position",
-				"" + Motors.forksMotor.getPosition());
-		SmartDashboard.putString("Local Filter Current to forks", "" + talFil);
-		SmartDashboard.putString("Filtered Current to forks", ""
-				+ Motors.forksMotor.totalOutputCurrent);
-		SmartDashboard.putString("Instant Current to forks", ""
-				+ Motors.forksMotor.getOutputCurrent());
-		SmartDashboard.putString("forks Setpoint:", "" + forksSetpoint);
-		SmartDashboard.putString("Forks Actual Setpoint", ""
-				+ Motors.forksMotor.getSetpoint());
-		SmartDashboard.putString("forks motor tripped:", "" + trippedForks);
-		SmartDashboard.putString("forks Homed:", "" + Motors.forksMotor.homed);
-
-		// End KnoxKode
-		// IF CLAW POSITIONS DO NOT WORK USE THE MANUAL OVERRIDE BELOW!
-		// Motors.forksMotor.changeControlMode(ControlMode.PercentVbus);
-		// Motors.forksMotor.set(analogFork);
-		// Fork Code End
-
-		// Tray Code
-		if (Motors.operator.getRawButton(6)) {
-			Motors.trayMotor.set(1);
-			if (Robot.trayMotorFilteredCurrent > 15) {
-				Motors.trayMotor.set(0);
-			}
-			trayExtended = true;
+		// if (manualFork = false) {
+		if (Motors.operator.getPOV() == 270) {
+			// Maybe widest setting
+		} else if (Motors.operator.getPOV() == 180) {
+			forksSetpoint = 17.25;
+			Motors.forksMotor.tripped = false;
+			// Maybe container
+		} else if (Motors.operator.getPOV() == 0) {
+			forksSetpoint = 25.375;
+			Motors.forksMotor.tripped = false;
+			// Maybe tote wide?
+		} else if (Motors.operator.getPOV() == 90) {
+			forksSetpoint = 15.5;
+			Motors.forksMotor.tripped = false;
+			// Maybe tote narrow
 		}
 
 		if (Motors.operator.getRawButton(8)) {
-			Motors.trayMotor.set(-1);
-			if (Robot.trayMotorFilteredCurrent > 15) {
-				Motors.trayMotor.set(0);
-			}
-			trayExtended = false;
+			forksSetpoint = 30.8125;
+			// open at HP
 		}
-		SmartDashboard.putString("Tray Current:", ""
-				+ Robot.trayMotorFilteredCurrent);
-
-		// End Tray Code
-
-		// Roller Code
-		if (Motors.operator.getRawButton(2)) {
-			Motors.rollersLeft.set(-1);
-			Motors.rollersRight.set(1);
-		}
-		if (Motors.operator.getRawButton(4)) {
-			Motors.rollersLeft.set(1);
-			Motors.rollersRight.set(-1);
-		}
-		if (Motors.operator.getRawButton(1)) {
-			Motors.rollersLeft.set(0);
-			Motors.rollersRight.set(0);
-		}
-		if (Motors.operator.getRawButton(3)) {
-			Motors.rollersLeft.set(.5);
-			Motors.rollersRight.set(.5);
-		}
-		// End Roller Code
 
 		// Elevator Code
 
@@ -171,11 +93,11 @@ public class OperatorControls {
 		double toNextLevelUp = 0;
 
 		if (trayExtended) {
-			offset = 7.5;
+			offset = 7.1;
 		}
 
-		boolean inc = Motors.operator.getRawButton(7);
-		boolean dec = Motors.operator.getRawButton(5);
+		boolean inc = Motors.operator.getRawButton(5);
+		boolean dec = Motors.operator.getRawButton(6);
 
 		if (elevatorCooldown.get() > ELEVATOR_COOLDOWN) {
 			elevatorCooldown.stop();
@@ -212,7 +134,8 @@ public class OperatorControls {
 		// elevatorCooldown.start();
 		// }
 		// }
-		if (Motors.operator.getRawButton(9)) {
+		if (Motors.operator.getRawButton(7)) {
+			elevatorPositionEU = Motors.elevatorMaster.getXEU();
 			Motors.elevatorMaster.tripped = false;
 			Motors.forksMotor.tripped = false;
 		}
@@ -223,8 +146,12 @@ public class OperatorControls {
 			} else {
 				manualControl = false;
 			}
-			elevatorPositionEU = Motors.elevatorMaster.getXEU() * -1
-					+ (-15 * analogElevator);
+			elevatorPositionEU = elevatorPositionEU + (-1.5 * analogElevator);
+			if (-elevatorPositionEU < Motors.elevatorMaster.span) {
+				elevatorPositionEU = -Motors.elevatorMaster.span;
+			} else if (-elevatorPositionEU > Motors.elevatorMaster.zero) {
+				elevatorPositionEU = -Motors.elevatorMaster.zero;
+			}
 		}
 
 		if (elevatorCooldown.get() == 0) {
@@ -257,19 +184,8 @@ public class OperatorControls {
 
 		SmartDashboard.putString("level", String.valueOf(level));
 
-		// switch to manual control
-<<<<<<< HEAD
-=======
-
-		if (Motors.operator.getRawButton(12)
-				&& (analogElevator > .1 || analogElevator < -.1)) {
-			if (manualControl == false){
-				manualControl = true;
-			}
-			elevatorPositionEU = Motors.elevatorMaster.getXEU() * -1
-					+ (-30 * analogElevator);
-		}
->>>>>>> origin/master
+		SmartDashboard.putString("Elevator SetPoint!",
+				String.valueOf(Motors.elevatorMaster.getEncPosition()));
 
 		SmartDashboard
 				.putString("EU value", String.valueOf(elevatorPositionEU));
@@ -288,19 +204,45 @@ public class OperatorControls {
 		SmartDashboard.putString("Forks Tripped on current", ""
 				+ Motors.forksMotor.tripped);
 
-		//
-		// Motors.elevatorMaster.enableControl();
-
-		if (Motors.operator.getRawButton(12)) {
+		if (Motors.operator.getRawButton(10)) {
 			Motors.elevatorMaster.homed = false;
 			elevatorPositionEU = 0;
 			level = 0;
 		}
+		if (Motors.operator.getRawButton(9)) {
+			Motors.forksMotor.homed = false;
+			forksSetpoint = Motors.forksMotor.scaleXDSpan;
+		}
 
-		Motors.elevatorMaster.setXEU(elevatorPositionEU);
-
-		SmartDashboard.putString("EU value",
-				String.valueOf(Motors.elevatorMaster.getXEU()));
+		if (!autoStack.isInterrupted()) {
+			autoStack.calculate();
+			elevatorPositionEU = autoStack.getElevatorSetpoint();
+			forksSetpoint = autoStack.getForkSetpoint();
+		}
+		if (!autoStraighten.isInterrupted()) {
+			autoStraighten.calculate();
+			elevatorPositionEU = autoStraighten.getElevatorSetpoint();
+			forksSetpoint = autoStraighten.getForkSetpoint();
+		}
+		if (!autoCatchStack.isInterrupted()) {
+			autoCatchStack.calculate();
+			elevatorPositionEU = autoCatchStack.getElevatorSetpoint();
+			forksSetpoint = autoCatchStack.getForkSetpoint();
+		}
+		if (!autoPlace.isInterrupted()) {
+			int trayPos = autoPlace.getTrayPosition();
+			if (trayPos != autoPlace.TRAY_POS_UNDEF) {
+				if (trayPos == autoPlace.TRAY_EXTENDED)
+					autoPlace.setElevatorPositions(elevatorTrayPlace);
+				else
+					autoPlace.setElevatorPositions(elevatorPosPlace);
+				
+				autoPlace.calculate();
+				elevatorPositionEU = autoPlace.getElevatorSetpoint();
+				forksSetpoint = autoPlace.getForkSetpoint();
+				traySetPoint = autoPlace.getTraySetPoint();
+			}
+		}
 
 		// manual control for elevator
 
@@ -310,53 +252,81 @@ public class OperatorControls {
 		// .setXEU(Motors.elevatorMaster.getXEU()*-1+(-30*analogElevator)); }
 
 		// Elevator Code End
-		if (Motors.operator.getRawButton(11) && Motors.operator.getRawButton(1)) {
-			hirenTestBool = true;
-			step = 0;
+
+		if (Motors.operator.getRawButton(3)) {
+			if (trayExtended)
+				autoStack.setElevatorPositions(elevatorTrayPos);
+			else
+				autoStack.setElevatorPositions(elevatorPos);
+			autoStack.start();
+		}
+		if (Motors.operator.getRawButton(2)) {
+				autoStack.setElevatorPositions(1.75, 24.7,38 ,38,48.9);
+				autoStack.start();
+		}
+		if(Motors.operator.getRawButton(1)){		
+				autoStack.setElevatorPositions(12.6, 24.7, 40 ,48.9);
+				autoStack.start();
+			}
+			
+		
+		// if (Motors.operator.getRawButton(2) &&
+		// Motors.operator.getRawButton(8)) {
+		// if (trayExtended)
+		// autoStraighten.setElevatorPositions(elevatorTrayPos);
+		// else
+		// autoStraighten.setElevatorPositions(elevatorPos);
+		// autoStraighten.start();
+		// }
+		// if (Motors.operator.getRawButton(3) &&
+		// Motors.operator.getRawButton(8)) {
+		// if (autoPlace.getTrayPosition() == autoPlace.TRAY_EXTENDED)
+		// autoPlace.start();
+		// }
+		if (Motors.operator.getRawButton(4)) {
+			autoStraighten.interrupt();
+			autoStack.interrupt();
+			autoPlace.interrupt();
 		}
 
-		if (hirenTestBool) {
-			hirensTestMethod();
-		}
-
-	}
-
-	public static boolean hirenTestBool = false;
-	public static int step = 0;
-
-	public static void hirensTestMethod() {
-		// don't flux with this
-		if (hirenTestBool == true) {
-
-			if (step == 0) {
-				elevatorPositionEU = elevatorTrayPos[1] + .7;
-				level = 1;
-				step = 1;
-			}
-			if (Motors.elevatorMaster.getXEU() < 14 && step == 1) {
-				forksSetpoint = 34;
-				step = 2;
-			}
-			if (Motors.forksMotor.getXEU() > 32.5 && step == 2) {
-				elevatorPositionEU = elevatorTrayPos[0];
-				level = 0;
-				step = 3;
-			}
-			if (Motors.elevatorMaster.getXEU() < 8.5 && step == 3) {
-				forksSetpoint = 25.375;
-				step = 4;
-			}
-			if (Motors.forksMotor.getXEU() < 26 && step == 4) {
-				elevatorPositionEU = elevatorTrayPos[3];
-				level = 3;
-				step = 5;
-			}
-
+		Motors.forksMotor.setXEU(forksSetpoint);
+		if (Motors.forksMotor.homed)
 			Motors.elevatorMaster.setXEU(elevatorPositionEU);
-			Motors.forksMotor.setXEU(forksSetpoint);
-			if (step == 5) {
-				hirenTestBool = false;
+	}
+
+	public static void oneRCAuto() {
+		Timer hTime = new Timer();
+		final double ONE_RC_AUTO_STOP_MOVE = 2.5;
+		hTime.start();
+		double forksSet = 17.25;
+		Motors.elevatorMaster.setXEU(1);
+		Motors.forksMotor.setXEU(forksSet);
+
+		if (Math.abs(Motors.forksMotor.getXEU() - forksSet) < 5
+				&& Motors.elevatorMaster.homed) {
+
+			Motors.elevatorMaster.setXEU(5);
+			if (hTime.get() < ONE_RC_AUTO_STOP_MOVE) {
+				Motors.bLeft.set(.5);
+				Motors.fLeft.set(.5);
+				Motors.bRight.set(-.5);
+				Motors.fRight.set(-.5);
+			}
+			if (hTime.get() > ONE_RC_AUTO_STOP_MOVE) {
+				hTime.stop();
+				Motors.bLeft.set(0);
+				Motors.fLeft.set(0);
+				Motors.bRight.set(0);
+				Motors.fRight.set(0);
 			}
 		}
+		if (hTime.get() > ONE_RC_AUTO_STOP_MOVE) {
+			hTime.stop();
+			Motors.bLeft.set(0);
+			Motors.fLeft.set(0);
+			Motors.bRight.set(0);
+			Motors.fRight.set(0);
+		}
 	}
+
 }

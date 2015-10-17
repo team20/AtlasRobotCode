@@ -120,7 +120,7 @@ public class T20AutoStraighten {
 			return;
 		double elevatorSetPoint = this.getElevatorSetpoint();
 		double forkSetPoint = this.getForkSetpoint();
-		double elevatorPosition = -this.elevator.getXEU();
+		double elevatorPosition = this.elevator.getXEU();
 		double forkPosition = this.fork.getXEU();
 	
 		SmartDashboard.putString("Calculated Elevator SP", String.valueOf(elevatorSetPoint));

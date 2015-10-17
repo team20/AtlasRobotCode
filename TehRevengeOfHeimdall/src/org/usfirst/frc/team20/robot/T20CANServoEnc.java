@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class T20CANServoEnc extends CANTalon {
 	private int masterId;
+	private int polarity = 1;
     private double [] talonCurrFil;
     protected double totalOutputCurrent = 0;
     public double currentLimit = 30;
@@ -31,20 +32,21 @@ public class T20CANServoEnc extends CANTalon {
 	private int position;
 	private double requestedX;
 	private double controllerX;
-	private double zero;
-	private double span;
+	protected double zero;
+	protected double span;
 	private double deadBand;
 	private boolean enabled;
 	private String canName;
-	private double scaleXDZero;
-	private double scaleXDSpan;
+	protected double scaleXDZero;
+	protected double scaleXDSpan;
 	private String scaleXDUOM;
 	public boolean homed;
 	public CANTalon[] slaves;
 	private double homeIncrementTicks;
 	protected double outlierDiff = 0;
 	protected int outlierTalon = -1;
-
+	private double homeCurrent = 30;
+	
 	// never use this constructor.
 	// CanServoPos(int masterId) throws CANTimeoutException {
 	// super(masterId);
@@ -87,12 +89,13 @@ public class T20CANServoEnc extends CANTalon {
 		this.d = d;
 		this.zero = zero;
 		this.span = span;
-		this.homeIncrementTicks = -((span - zero) * .06);
+		this.homeIncrementTicks = -((span - zero) * .04);
 		this.setFeedbackDevice(FeedbackDevice.QuadEncoder);
 		this.changeControlMode(ControlMode.Position);
 		// this.configMaxOutputVoltage(12);
 		this.setPID(p, i, d);
 		super.setPosition(zero);
+		System.out.println("The super.setPosition Just Got Used!");
 		this.controllerX = zero;
 		this.requestedX = zero;
 		this.scaleXDZero = 0;
@@ -148,6 +151,10 @@ public class T20CANServoEnc extends CANTalon {
 		this.scaleXDZero = zeroXD;
 		this.scaleXDSpan = spanXD;
 		this.scaleXDUOM = engineeringUnits;
+		if(spanXD < zeroXD && this.zero < this.span)
+			this.polarity = -1;
+		if(spanXD > zeroXD && this.zero > this.span)
+			this.polarity = -1;
 	}
 
 	/**
@@ -191,8 +198,8 @@ public class T20CANServoEnc extends CANTalon {
 		}
 		
 		this.requestedX = x;
-		SmartDashboard.putString("elevator setpoint", String.valueOf(this.requestedX));
-		SmartDashboard.putString("elevator setpoint Actual", String.valueOf(this.getSetpoint()));		
+//		SmartDashboard.putString("elevator setpoint", String.valueOf(this.requestedX));
+//		SmartDashboard.putString("elevator setpoint Actual", String.valueOf(this.getSetpoint()));		
 		
 		// do nothing if command out of bounds
 		if (this.span < this.zero) {
@@ -302,12 +309,13 @@ public class T20CANServoEnc extends CANTalon {
 	
 	public void home(){
 		int pos = super.getEncPosition();
+		this.sumCurrent();
 		SmartDashboard.putString("home position", String.valueOf(pos + this.homeIncrementTicks));
 		super.setPosition(pos);
 		super.set(pos + this.homeIncrementTicks);
-		if(super.isFwdLimitSwitchClosed() || super.isRevLimitSwitchClosed()){
+		if(super.isFwdLimitSwitchClosed() || super.isRevLimitSwitchClosed() || this.totalOutputCurrent > this.homeCurrent){
 			this.homed = true;
-			super.setPosition(this.zero+100);
+			super.setPosition(this.zero-100);
 			this.set(this.zero);
 			this.position = (int)this.zero;
 			
@@ -340,7 +348,7 @@ public class T20CANServoEnc extends CANTalon {
 		rangeXD = this.scaleXDSpan - this.scaleXDZero; // range in XD units
 														// (Engineering units)
 		pctTurns = (turns - this.zero) / this.span;
-		return (pctTurns * rangeXD + this.scaleXDZero);
+		return polarity * (pctTurns * rangeXD + this.scaleXDZero);
 
 	}
 	private void sumCurrent(){
@@ -351,6 +359,7 @@ public class T20CANServoEnc extends CANTalon {
 		for(int i=0;i< this.slaves.length;i++){
 			this.talonCurrFil[i]= this.talonCurrFil[i]*.9+this.slaves[i].getOutputCurrent()*.1;
 		}
+		
 		this.talonCurrFil[this.slaves.length] = 
 			     this.talonCurrFil[this.slaves.length]*.9+this.getOutputCurrent()*.1;
 		
@@ -369,10 +378,6 @@ public class T20CANServoEnc extends CANTalon {
 
 		this.totalOutputCurrent = mi;
  	}
-	
-	
-	
-	
 
 	/**
 	 * 

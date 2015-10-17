@@ -26,6 +26,7 @@ public class T20CANServoEncForks extends CANTalon {
     public double currentLimit = 30;
     public double currentLimitOperating = 20;
     public boolean tripped = false;
+    protected boolean currentLimited = false;
 	private double p;
 	private double i;
 	private double d;
@@ -42,7 +43,7 @@ public class T20CANServoEncForks extends CANTalon {
 	private String scaleXDUOM;
 	protected boolean homed;
 	public CANTalon[] slaves;
-	public double homeCurrent = 5;
+	public double homeCurrent = 12.5;
 	// never use this constructor.
 	// CanServoPos(int masterId) throws CANTimeoutException {
 	// super(masterId);
@@ -134,6 +135,8 @@ public class T20CANServoEncForks extends CANTalon {
 	 * <br>
 	 * By default XDScale is 0-1.<br>
 	 * Engineering units are informational only.<br>
+	 * 
+	 * 
 	 * <br>
 	 * 
 	 * @param zeroXD
@@ -191,6 +194,7 @@ public class T20CANServoEncForks extends CANTalon {
 			this.controllerX = x;
 			return;
 		}
+
 		
 		this.position = super.getEncPosition();
 		
@@ -201,6 +205,7 @@ public class T20CANServoEncForks extends CANTalon {
 			super.set(this.position);
 			// make the setpoint look like pv so controller is not enabled once current drops.
 			this.controllerX = this.requestedX;
+			this.currentLimited = true;
 			this.disableControl();
 			return;
 		}
@@ -211,7 +216,7 @@ public class T20CANServoEncForks extends CANTalon {
 		}
 		
 		SmartDashboard.putString("Forks setpoint", String.valueOf(this.requestedX));
-		SmartDashboard.putString("Forks setpoint Actual", String.valueOf(this.getSetpoint()));		
+		SmartDashboard.putString("Forks setpoint Actual", String.valueOf(super.getSetpoint()));		
 		SmartDashboard.putString("Forks Total Current", String.valueOf(this.totalOutputCurrent));
 		
 		// limit to zero and span bounds
@@ -242,8 +247,9 @@ public class T20CANServoEncForks extends CANTalon {
 
 		// only send can command if it is new position change is significant.
 		// i.e. if new sp is within deadband of last setpoint.
-		if (Math.abs(this.controllerX - this.requestedX) > this.deadBand) {
+		if (!currentLimited || (Math.abs(this.controllerX - this.requestedX) > this.deadBand)) {
 			super.set(this.requestedX);
+			currentLimited = false;
 			this.controllerX = this.requestedX;
 			this.enableControl();
 		}
@@ -313,7 +319,7 @@ public class T20CANServoEncForks extends CANTalon {
 		if (this.totalOutputCurrent > this.homeCurrent) {
 			this.homed = true;
 			super.setPosition(this.zero-3000);
-			this.set(this.zero);
+			this.set(this.span);
 			this.position = (int)this.zero;
 		}
 	}

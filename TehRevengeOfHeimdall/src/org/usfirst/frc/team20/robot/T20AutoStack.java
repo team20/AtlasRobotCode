@@ -11,24 +11,38 @@ public class T20AutoStack {
 	private double elevatorSetPoint;
 	private double forkSetPoint;
 	private double[] elevatorPositions;
-	
-	private static final double FORK_WIDE_TOTE = 25,
-		FORK_OPEN = 31;
-	
-	private static final int STATE_PLACE = 0, STATE_RELEASE = 1, STATE_LOWER = 2, STATE_GRAB = 3, STATE_LIFT = 4;
-	
+	private Trapezoidal trap;
+	private long startTime;
+	private int lastState;
+	private double currentSetpoint;
+	private int parity;
+	private double x;
+	private double y;
+
+	private static final double FORK_WIDE_TOTE = 15.5, FORK_OPEN = 25;
+
+	private static final int STATE_STAGE = 0, STATE_PLACE = 1,
+			STATE_RELEASE = 2, STATE_LOWER = 3, STATE_GRAB = 4, STATE_LIFT = 5;
+
 	public T20AutoStack(T20CANServoEnc elevator, T20CANServoEncForks fork) {
 		this.elevator = elevator;
 		this.fork = fork;
 		this.interrupted = true;
+		this.lastState = -1;
+		this.startTime = 0;
+		this.trap = Trapezoidal.create()
+				.withAcceleration(5)
+				.withDeceleration(5)
+				.withMaxSetPointDistance(30);
 	}
-	
-	public void setElevatorPositions(double... elevatorPositions){
+
+	public void setElevatorPositions(double... elevatorPositions) {
 		this.elevatorPositions = elevatorPositions;
 	}
-	
-	public double getForkSetpoint(){
-		switch(state){
+
+	public double getForkSetpoint() {
+		switch (state) {
+		case STATE_STAGE:
 		case STATE_PLACE:
 			return fork.getXEU();
 		case STATE_RELEASE:
@@ -43,9 +57,15 @@ public class T20AutoStack {
 			return fork.getXEU();
 		}
 	}
+
+	public double getElevatorSetpoint() {
+		return this.getElevatorSetpoint(this.state);
+	}
 	
-	public double getElevatorSetpoint(){
-		switch(state){
+	public double getElevatorSetpoint(int state) {
+		switch (state) {
+		case STATE_STAGE:
+			return elevatorPositions[1]+4;
 		case STATE_PLACE:
 			return elevatorPositions[1];
 		case STATE_RELEASE:
@@ -61,36 +81,53 @@ public class T20AutoStack {
 		}
 	}
 	
-	public void interrupt(){
+	public double getCascadingElevatorSetpoint(){
+		if(this.lastState == -1){
+			y = this.getElevatorSetpoint();
+			this.lastState = 1;
+		}
+		x = elevator.getSetpoint();
+		//return (y = y * .9 + x * .1);
+		return x;
+	}
+
+	public void interrupt() {
 		this.interrupted = true;
 	}
-	
-	public boolean isInterrupted(){
+
+	public boolean isInterrupted() {
 		return this.interrupted;
 	}
-	
-	public void start(){
+
+	public void start() {
 		this.interrupted = false;
-		this.state = STATE_PLACE;
+		this.state = STATE_STAGE;
 	}
-	
-	public void calculate(){
-		if(interrupted)
+
+	public void calculate() {
+		if (interrupted)
 			return;
 		double elevatorSetPoint = this.getElevatorSetpoint();
 		double forkSetPoint = this.getForkSetpoint();
-		double elevatorPosition = -this.elevator.getXEU();
+		double elevatorPosition = this.elevator.getXEU();
 		double forkPosition = this.fork.getXEU();
-	
-		SmartDashboard.putString("Calculated Elevator SP", String.valueOf(elevatorSetPoint));
-		SmartDashboard.putString("Calculated Fork SP", String.valueOf(forkSetPoint));
-		SmartDashboard.putString("Calculated Elevator Position", String.valueOf(elevatorPosition));
-		SmartDashboard.putString("Calculated Fork Position", String.valueOf(forkPosition));
-		
-		if(Math.abs(forkSetPoint - forkPosition) > 1 || Math.abs(elevatorSetPoint - elevatorPosition) > 2)
+
+		SmartDashboard.putString("Calculated Elevator SP",
+				String.valueOf(elevatorSetPoint));
+		SmartDashboard.putString("Calculated Fork SP",
+				String.valueOf(forkSetPoint));
+		SmartDashboard.putString("Calculated Elevator Position",
+				String.valueOf(elevatorPosition));
+		SmartDashboard.putString("Calculated Fork Position",
+				String.valueOf(forkPosition));
+
+		if (Math.abs(forkSetPoint - forkPosition) > 1
+				|| Math.abs(elevatorSetPoint - elevatorPosition) > 2)
 			return;
-		
-		switch(state){
+
+		switch (state) {
+		case STATE_STAGE:
+			state = STATE_PLACE;
 		case STATE_PLACE:
 			state = STATE_RELEASE;
 			break;
